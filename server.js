@@ -1,27 +1,55 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config();
 
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-/* ROUTES */
-app.use("/api/chat", require("./routes/chat"));
+/* =======================
+   MIDDLEWARE
+======================= */
+app.use(
+  cors({
+    origin: "*", // allow all frontends (safe for now)
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+/* =======================
+   ROUTES
+======================= */
+app.use("/api/menu", require("./routes/menu"));
 app.use("/api/bookings", require("./routes/bookings"));
+app.use("/api/chat", require("./routes/chat"));
+app.use("/api/orders", require("./routes/orders"));
 app.use("/api/blocks", require("./routes/blocks"));
 
-/* DB */
+/* =======================
+   HEALTH CHECK
+======================= */
+app.get("/", (req, res) => {
+  res.status(200).send("✅ Wha-Chai backend is running");
+});
+
+/* =======================
+   DATABASE
+======================= */
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB error:", err.message));
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-/* SERVER */
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
-);
-app.use("/api/menu", require("./routes/menu"));
-
+/* =======================
+   START SERVER
+======================= */
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
